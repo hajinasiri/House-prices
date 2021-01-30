@@ -24,7 +24,6 @@ ctest = test_data.count()
 # sns.heatmap(train_data.isnull(),yticklabels=False,cbar=False,cmap='viridis')
 # plt.show()
 
-t = train_data[train_data.columns[1:]].corr()['LotFrontage'][:-1]
-average = train_data.mean()
+
 
 
