@@ -9,10 +9,8 @@ def clean(data):
     #This function takes a dataframe as its variable and cleans it
     #Dropping columns with missing more than half of their data
     data = data.drop(['Alley','PoolQC','Fence','MiscFeature'],axis=1)
-    # repalceing missing values from numerical columns with mean of the column
-    data = data.fillna(data.mean())
-    #replacing missing values from non-numerical columns with the most frequent value in the column
-    data = data.fillna(data.mode().iloc[0])
+    data = data.fillna(data.mean())# repalce missing values from numerical columns with mean of the column
+    data = data.fillna(data.mode().iloc[0])#replace missing values from non-numerical columns with the most frequent value in the column
     return data
 train_data = clean(train_data)
 test_data = clean(test_data)
@@ -30,8 +28,27 @@ for column in st_columns:
 
 # sns.heatmap(train_data.isnull(),yticklabels=False,cbar=False,cmap='viridis')
 # plt.show()
-# splitting train data intor training and testing set
+
 y = train_data["SalePrice"]
 X = train_data.drop('SalePrice',axis=1)
 from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)# split train data intor training and testing set
+#Using linear regression algorithm
+from sklearn.linear_model import LinearRegression
+linear_regressor = LinearRegression()  # create object for the class
+linear_regressor.fit(X_train, y_train)  # perform linear regression
+prediction = linear_regressor.predict(X_test)  # make predictions
+coef = pd.DataFrame(linear_regressor.coef_,X_train.columns,columns=['Coef'])#create a dataframe from coefficiants to study
+# plt.scatter(y_test,prediction)
+# plt.show()
+# sns.distplot((y_test-prediction))
+# plt.show()
+from sklearn import metrics
+print(metrics.mean_absolute_error(y_test,prediction))
+print(metrics.mean_squared_error(y_test,prediction))
+
+linear_regressor.fit(X,y)#use all training data to train the model
+result = linear_regressor.predict(test_data)#Predict test data's price
+result = pd.DataFrame(result,index=test_data['Id'],columns=['SalePrice'])
+result.index.names = ['Id']
+result.to_csv('./house_price_result.csv')
