@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sklearn
 import seaborn as sns
 import matplotlib.pyplot as plt
 test_data = pd.read_csv("test.csv")
@@ -66,7 +67,8 @@ result.to_csv('./house_price_result.csv')
 corrmat = train_data.corr()
 top_corr_features = corrmat.index
 v = train_data[top_corr_features].corr()
-v1 = v[(v['SalePrice'] >= 0.2) & (v['SalePrice'] < 1)]
+v1 = v[(v['SalePrice'] >= 0.2) & (v['SalePrice'] < 1)]#smaller than 1 to get rid of the 'salePrice'
+# as a feature
 v2 = v[v['SalePrice'] <= -0.2]
 v = v1.append(v2)
 col = v.index
@@ -80,6 +82,7 @@ l = LinearRegression()  # create object for the class
 l.fit(featured_train, y_train)  # perform linear regression
 prediction = l.predict(featured_test)  # make predictions
 print(metrics.mean_absolute_error(y_test,prediction))
+print(metrics.mean_absolute_error(y_train,l.predict(featured_train)))
 
 import seaborn as sns
 #get correlations of each features in dataset
@@ -90,3 +93,19 @@ import seaborn as sns
 # #plot heat map
 # g=sns.heatmap(train_data[top_corr_features].corr(),annot=True,cmap="RdYlGn")
 # plt.show()
+print("----Tensorflow_____")
+#tensorflow
+t_train = featured_train.values
+t_test = featured_test.values
+t_y_train = y_train.values
+t_y_test = y_test.values
+#normalizing the data
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+scaler.fit(t_train)
+t_train = scaler.transform(t_train)
+t_test = scaler.transform(t_test)
+#creating neural network model
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
