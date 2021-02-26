@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 test_data = pd.read_csv("test.csv")
 index = test_data['Id']
 train_data = pd.read_csv("train.csv")
+original = train_data
+train_data = train_data.loc[train_data['SalePrice'] <= 400000]#gets rid of the outlier prices
 y = train_data["SalePrice"]
+# sns.displot(y)#to plot the price distribution
+
 #create a dictionay of most frequent value in each column
 def clean(data):
     data['BsmtFinType1'] = data['BsmtFinType1'].replace('NA', 'Missing')
@@ -18,7 +22,6 @@ def clean(data):
     #This function takes a dataframe as its variable and cleans it
     #Dropping columns with missing more than half of their data
     data = data.drop(['Id','Alley','PoolQC','Fence','MiscFeature','Street'],axis=1)
-    # data = data.drop(['MSSubClass','Utilities','LandContour','LotConfig','Condition2','Condition1','BldgType','OverallCond','BsmtCond','BsmtFinType2','BsmtFinSF2','Heating','LowQualFinSF','BsmtHalfBath','FireplaceQu'],axis=1)
     data = data.fillna(data.mean())# repalce missing values from numerical columns with mean of the column
     data = data.fillna(data.mode().iloc[0])#replace missing values from non-numerical columns with the most frequent value in the column
     return data
@@ -95,17 +98,39 @@ import seaborn as sns
 # plt.show()
 print("----Tensorflow_____")
 #tensorflow
-t_train = featured_train.values
-t_test = featured_test.values
+t_train = X_train.values
+t_test = X_test.values
 t_y_train = y_train.values
 t_y_test = y_test.values
 #normalizing the data
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
-scaler.fit(t_train)
-t_train = scaler.transform(t_train)
+t_train = scaler.fit_transform(t_train)
 t_test = scaler.transform(t_test)
 #creating neural network model
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+from tensorflow.keras import regularizers
+model = Sequential()
+model.add(Dense(74,activation='tanh',kernel_regularizer=regularizers.L1(0.001)))
+model.add(Dense(55,activation='relu',kernel_regularizer=regularizers.L1(0.001)))
+model.add(Dense(40,activation='relu',kernel_regularizer=regularizers.L1(0.001)))
+model.add(Dense(30,activation='relu',kernel_regularizer=regularizers.L1(0.001)))
+model.add(Dense(1,activation='relu'))
+model.compile(optimizer='adam',loss='mse')
+model.fit(x=t_train, y=t_y_train,validation_data=(t_test,t_y_test),batch_size=128,epochs=340)
+loss = pd.DataFrame(model.history.history)
+loss.plot()
+plt.show()
+#evaluate the model
+print(model.evaluate(t_test,y_test,verbose=0))
+test_prediction = model.predict(t_test)
+test_prediction = pd.Series(test_prediction.reshape(473,))
+pred_def = pd.DataFrame(y_test,columns=['Test True Y'])
+pred_def = pd.concat([pred_def,test_prediction],axis=1)
+pred_def.columns = ['Test True y', 'Model Predictions']
+print(metrics.mean_absolute_error(t_y_test,test_prediction))
+print(np.sqrt(metrics.mean_squared_error(t_y_test,test_prediction)))
+from sklearn.metrics import explained_variance_score
+print(explained_variance_score(t_y_test, test_prediction))
